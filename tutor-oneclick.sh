@@ -180,18 +180,55 @@ EOF
 
 # ติดตั้ง Tutor
 install_tutor() {
-    print_section "ติดตั้ง Tutor OpenEdX"
+    print_section "ติดตั้ง Tutor OpenEdX (PEP 668 Compliant)"
     
-    print_info "ติดตั้ง Tutor..."
-    # pip install --upgrade pip
+    # ลบ venv เก่าถ้ามี
+    if [ -d "$VENV_DIR" ]; then
+        print_warning "พบ virtual environment เก่า กำลังลบ..."
+        rm -rf "$VENV_DIR"
+    fi
+    
+    print_info "สร้าง Python virtual environment..."
+    python3 -m venv "$VENV_DIR"
+    
+    print_info "เปิดใช้งาน virtual environment..."
+    source "$VENV_DIR/bin/activate"
+    
+    print_info "อัพเกรด pip ใน virtual environment..."
+    pip install --upgrade pip setuptools wheel
+    
+    print_info "ติดตั้ง Tutor ใน virtual environment..."
     pip install "tutor[full]"
     
-    if ! grep -q ".local/bin" ~/.bashrc; then
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-    fi
-    export PATH="$HOME/.local/bin:$PATH"
+    # สร้าง wrapper script
+    print_info "สร้าง wrapper script..."
+    sudo tee /usr/local/bin/tutor > /dev/null << EOFWRAPPER
+#!/bin/bash
+source "$VENV_DIR/bin/activate"
+exec "$VENV_DIR/bin/tutor" "\$@"
+EOFWRAPPER
     
-    print_status "Tutor ติดตั้งสำเร็จ: $(tutor --version)"
+    sudo chmod +x /usr/local/bin/tutor
+    
+    # เพิ่ม alias ใน bashrc
+    if ! grep -q "TUTOR_VENV" ~/.bashrc; then
+        cat >> ~/.bashrc << 'EOFBASH'
+
+# Tutor OpenEdX Virtual Environment
+export TUTOR_VENV="$HOME/.tutor-venv"
+alias tutor-venv='source $TUTOR_VENV/bin/activate'
+EOFBASH
+    fi
+    
+    deactivate 2>/dev/null || true
+    
+    # ทดสอบ tutor command
+    if /usr/local/bin/tutor --version &> /dev/null; then
+        print_status "Tutor ติดตั้งสำเร็จ: $(tutor --version)"
+    else
+        print_error "ไม่สามารถติดตั้ง Tutor ได้"
+        exit 1
+    fi
 }
 
 # ตั้งค่าและเริ่ม Tutor
@@ -203,7 +240,7 @@ setup_tutor() {
     
     print_info "กำลังตั้งค่า Tutor (อาจใช้เวลาหลายนาที)..."
     
-    tutor config save --set LMS_HOST=$LMS_DOMAIN \
+    /usr/local/bin/tutor config save --set LMS_HOST=$LMS_DOMAIN \
         --set CMS_HOST=$CMS_DOMAIN \
         --set CONTACT_EMAIL=$ADMIN_EMAIL \
         --set PLATFORM_NAME="$PLATFORM_NAME" \
@@ -213,10 +250,10 @@ setup_tutor() {
     print_info "กำลังเริ่มต้น Tutor (จะใช้เวลา 15-30 นาที)..."
     print_warning "กรุณาอดทน กำลังดาวน์โหลดและติดตั้ง Docker images..."
     
-    tutor local launch --non-interactive
+    /usr/local/bin/tutor local launch --non-interactive
     
     print_info "สร้าง admin user..."
-    tutor local createuser --staff --superuser admin $ADMIN_EMAIL --password=$ADMIN_PASSWORD
+    /usr/local/bin/tutor local createuser --staff --superuser admin $ADMIN_EMAIL --password=$ADMIN_PASSWORD
     
     print_status "Tutor OpenEdX พร้อมใช้งานแล้ว"
 }
