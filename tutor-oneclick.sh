@@ -18,6 +18,7 @@ NC='\033[0m'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CURRENT_USER=$(whoami)
 HOME_DIR="/home/$CURRENT_USER"
+VENV_DIR="$HOME_DIR/.tutor-venv"
 
 print_header() {
     clear
@@ -25,6 +26,7 @@ print_header() {
     echo "╔═══════════════════════════════════════════════╗"
     echo "║                                               ║"
     echo "║      OpenEdX Complete Setup Wizard           ║"
+    echo "║      with PEP 668 Fix                        ║"
     echo "║                                               ║"
     echo "╚═══════════════════════════════════════════════╝"
     echo -e "${NC}"
