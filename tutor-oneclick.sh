@@ -183,7 +183,7 @@ install_tutor() {
     print_section "ติดตั้ง Tutor OpenEdX"
     
     print_info "ติดตั้ง Tutor..."
-    pip install --upgrade pip
+    # pip install --upgrade pip
     pip install "tutor[full]"
     
     if ! grep -q ".local/bin" ~/.bashrc; then
