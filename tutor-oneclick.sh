@@ -255,7 +255,7 @@ setup_tutor() {
     /usr/local/bin/tutor local launch --non-interactive
     
     print_info "สร้าง admin user..."
-    /usr/local/bin/tutor local createuser --staff --superuser admin $ADMIN_EMAIL --password=$ADMIN_PASSWORD
+    /usr/local/bin/tutor local do createuser --staff --superuser admin $ADMIN_EMAIL --password=$ADMIN_PASSWORD
     
     print_status "Tutor OpenEdX พร้อมใช้งานแล้ว"
 }
